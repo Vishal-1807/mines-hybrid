@@ -1,0 +1,379 @@
+// FIXED: Enhanced history content section with proper pagination
+  const historyContent: ContentSection = {
+    id: 'history',
+    title: 'Game History',
+    render: (container: Container, dimensions: PopupDimensions) => {
+      
+      // Store reference to this render function for re-rendering
+      renderActiveContent = () => {
+        console.log(`📊 Re-rendering history content with data:`, {
+          page: (currentHistoryData as HistoryResponse)?.page,
+          totalPages: (currentHistoryData as HistoryResponse)?.totalPages,
+          recordCount: (currentHistoryData as HistoryResponse)?.history?.length || 0
+        });
+        historyContent.render(container, dimensions);
+      };
+      
+      // Show loading indicator while fetching
+      const showLoadingIndicator = () => {
+        container.removeChildren();
+        
+        const loadingText = new Text('Loading history...', {
+          fontFamily: 'Roboto',
+          fontSize: 18,
+          fill: 0xFFFFFF,
+          align: 'center'
+        });
+        loadingText.anchor.set(0.5);
+        loadingText.x = dimensions.contentWidth / 2;
+        loadingText.y = dimensions.contentHeight / 2;
+        container.addChild(loadingText);
+      };
+
+      // Show error message if loading fails
+      const showErrorMessage = (error: any) => {
+        container.removeChildren();
+        
+        const errorText = new Text(`Failed to load history: ${error.message || 'Unknown error'}`, {
+          fontFamily: 'Roboto',
+          fontSize: 16,
+          fill: 0xFF6B6B,
+          align: 'center',
+          wordWrap: true,
+          wordWrapWidth: dimensions.contentWidth - 40
+        });
+        errorText.anchor.set(0.5);
+        errorText.x = dimensions.contentWidth / 2;
+        errorText.y = dimensions.contentHeight / 2 - 20;
+        container.addChild(errorText);
+
+        // Add retry button
+        const retryButton = new Graphics();
+        retryButton.rect(0, 0, 100, 35);
+        retryButton.fill({ color: 0x4A90E2, alpha: 0.8 });
+        retryButton.stroke({ color: 0xFFFFFF, width: 2 });
+        retryButton.x = (dimensions.contentWidth - 100) / 2;
+        retryButton.y = dimensions.contentHeight / 2 + 20;
+        retryButton.eventMode = 'static';
+        retryButton.cursor = 'pointer';
+        
+        const retryText = new Text('Retry', {
+          fontFamily: 'Roboto',
+          fontSize: 14,
+          fill: 0xFFFFFF,
+          align: 'center'
+        });
+        retryText.anchor.set(0.5);
+        retryText.x = retryButton.x + 50;
+        retryText.y = retryButton.y + 17.5;
+        
+        retryButton.on('pointerdown', () => {
+          shouldRefreshHistory = true;
+          renderActiveContent();
+        });
+        
+        container.addChild(retryButton);
+        container.addChild(retryText);
+      };
+
+      // Main render function that creates the table
+      const renderHistoryTable = (historyData: any) => {
+        container.removeChildren();
+        
+        console.log(`📊 Creating table with history data:`, {
+          page: historyData?.page,
+          totalPages: historyData?.totalPages,
+          hasNextPage: historyData?.hasNextPage,
+          recordCount: historyData?.history?.length || 0
+        });
+        
+        const table = createEnhancedHistoryTableWithPagination({
+          width: dimensions.contentWidth,
+          height: dimensions.contentHeight,
+          historyResponse: historyData,
+          onViewMatrix: (historyItem: HistoryItem) => {
+            SoundManager.playPopup();
+            recordUserActivity(ActivityTypes.MATRIX_VIEW)
+            // Close existing popup if any
+            if (currentMatrixPopup) {
+              container.parent.removeChild(currentMatrixPopup);
+              currentMatrixPopup = null;
+            }
+            
+            // Create new matrix popup
+            currentMatrixPopup = createMatrixPopup(historyItem, () => {
+              if (currentMatrixPopup) {
+                container.parent.removeChild(currentMatrixPopup);
+                currentMatrixPopup = null;
+              }
+            }, width, height);
+            
+            // Add to parent container (popup container)
+            container.parent.addChild(currentMatrixPopup);
+          },
+          onPageChange: handlePageChange, // FIXED: Use the proper handler
+          columns: [
+            { width: 0.25, align: 'left' },
+            { width: 0.25, align: 'right' },
+            { width: 0.25, align: 'right' },
+            { width: 0.20, align: 'right' },
+            { width: 0.03, align: 'center' }
+          ],
+          rowHeight: height * 0.05,
+          headerHeight: height * 0.05,
+          fontSize: 13,
+          headerFontSize: 14,
+          alternateRowColors: true,
+          scrollBarWidth: 18
+        });
+        
+        container.addChild(table);
+      };
+
+      // Check if we need to refresh history data
+      if (shouldRefreshHistory) {
+        console.log('📊 Refreshing history data...');
+        shouldRefreshHistory = false;
+        
+        showLoadingIndicator();
+        
+        loadHistoryPage(1, 10)
+          .then((data) => {
+            console.log('📊 Fresh history data loaded:', data);
+            currentHistoryData = data;
+            renderHistoryTable(currentHistoryData);
+          })
+          .catch((error) => {
+            console.error('📊 Failed to load fresh history:', error);
+            showErrorMessage(error);
+          });
+      } else {
+        console.log('📊 Using cached history data');
+        renderHistoryTable(currentHistoryData);
+      }
+    }
+  };
+
+  // Create popup with all sections
+  const popup = createPopup({
+    width,
+    height,
+    onClose: () => {
+      SoundManager.playPopup();
+      // Clean up matrix popup if open
+      if (currentMatrixPopup) {
+        try {
+          currentMatrixPopup.parent?.removeChild(currentMatrixPopup);
+        } catch (e) {
+          // Ignore if already removed
+        }
+        currentMatrixPopup = null;
+      }
+      onClose();
+    },
+    closeButtonTexture: 'backButton',
+    sidebarButtons,
+    contentSections: [musicContent, rulesContent, historyContent],
+    defaultActiveSection: 'music'
+  });
+
+
+
+  const createEnhancedHistoryTableWithPagination = (options: any) => {
+  const {
+    width,
+    height,
+    historyResponse,
+    onViewMatrix,
+    onPageChange,
+    columns,
+    rowHeight,
+    headerHeight,
+    fontSize,
+    headerFontSize,
+    alternateRowColors,
+    scrollBarWidth
+  } = options;
+
+  console.log(`📊 Creating table with pagination. Current page: ${historyResponse?.page}, Total pages: ${historyResponse?.totalPages}`);
+
+  const mainContainer = new Container();
+  
+  // Reserve space for pagination controls
+  const paginationHeight = height * 0.2;
+  const tableHeight = height - paginationHeight;
+  
+  // Transform data for table display
+  const transformedData = [
+    { datetime: 'Date/Time', bet: 'Bet', profit: 'Profit', won: 'Won', view: '' }, // Header
+    ...(historyResponse.history || []).map((item: HistoryItem) => ({
+      datetime: formatDateTime(item.endTime),
+      bet: `${item.betAmount}`,
+      profit: `${item.profit >= 0 ? '+' : ''}${item.profit.toFixed(2)}`,
+      won: `${item.won.toFixed(2)}`,
+      view: '👁️'
+    }))
+  ];
+  
+  // Create table container
+  const tableContainer = new Container();
+  const contentContainer = new Container();
+  
+  // Create mask for table content
+  const maskWidth = width - 20;
+  const mask = new Graphics();
+  mask.rect(0, 0, maskWidth, tableHeight);
+  mask.fill(0xFFFFFF);
+  tableContainer.addChild(mask);
+  contentContainer.mask = mask;
+  
+  // Draw table header
+  const headerContainer = new Container();
+  let headerX = 0;
+  
+  // Header background
+  const headerBg = new Graphics();
+  headerBg.rect(0, 0, maskWidth, headerHeight);
+  headerBg.fill({ color: 0x34495E, alpha: 0.9 });
+  headerContainer.addChild(headerBg);
+  
+  // Header texts
+  const headerRow = transformedData[0];
+  Object.values(headerRow).forEach((cellValue: any, colIndex: number) => {
+    const colWidth = maskWidth * columns[colIndex].width;
+    
+    const headerText = new Text(String(cellValue), {
+      fontFamily: 'Roboto',
+      fontSize: headerFontSize,
+      fill: 0xFFFFFF,
+      fontWeight: 'bold',
+      align: columns[colIndex].align
+    });
+    
+    // Position text based on alignment
+    if (columns[colIndex].align === 'center') {
+      headerText.anchor.set(0.5, 0.5);
+      headerText.x = headerX + colWidth / 2;
+    } else if (columns[colIndex].align === 'right') {
+      headerText.anchor.set(1, 0.5);
+      headerText.x = headerX + colWidth - 10;
+    } else {
+      headerText.anchor.set(0, 0.5);
+      headerText.x = headerX + 10;
+    }
+    
+    headerText.y = headerHeight / 2;
+    headerContainer.addChild(headerText);
+    
+    headerX += colWidth;
+  });
+  
+  // Draw table rows
+  const rowsContainer = new Container();
+  rowsContainer.y = headerHeight;
+  
+  transformedData.slice(1).forEach((row: any, rowIndex: number) => {
+    const rowContainer = new Container();
+    rowContainer.y = rowIndex * rowHeight;
+    
+    // Row background with alternating colors
+    const rowBg = new Graphics();
+    rowBg.rect(0, 0, maskWidth, rowHeight);
+    rowBg.fill({ 
+      color: alternateRowColors && rowIndex % 2 === 1 ? 0x2C3E50 : 0x34495E, 
+      alpha: 0.3 
+    });
+    rowContainer.addChild(rowBg);
+    
+    // Row cells
+    let cellX = 0;
+    Object.entries(row).forEach(([key, cellValue]: [string, any], colIndex: number) => {
+      const colWidth = maskWidth * columns[colIndex].width;
+      
+      if (key === 'view') {
+        // Create eye button for view column
+        const eyeButton = new Container();
+        eyeButton.eventMode = 'static';
+        eyeButton.cursor = 'pointer';
+        
+        // Button background
+        const buttonBg = new Graphics();
+        buttonBg.circle(0, 0, height * 0.03);
+        buttonBg.fill({ color: 0x4A90E2, alpha: 0.8 });
+        buttonBg.stroke({ color: 0xFFFFFF, width: 2 });
+        eyeButton.addChild(buttonBg);
+        
+        // Eye emoji
+        const eyeText = new Text('👁️', {
+          fontFamily: 'Arial',
+          fontSize: 12,
+          fill: 0xFFFFFF
+        });
+        eyeText.anchor.set(0.5);
+        eyeButton.addChild(eyeText);
+        
+        // Position button
+        eyeButton.x = cellX + colWidth / 2;
+        eyeButton.y = rowHeight / 2;
+        
+        // Click handler
+        eyeButton.on('pointerdown', (event: any) => {
+          event.stopPropagation();
+          if (historyResponse.history && historyResponse.history[rowIndex]) {
+            onViewMatrix(historyResponse.history[rowIndex]);
+          }
+        });
+        
+        // Hover effects
+        eyeButton.on('pointerover', () => {
+          buttonBg.clear();
+          buttonBg.circle(0, 0, height * 0.03);
+          buttonBg.fill({ color: 0x5BA0F2, alpha: 1 });
+          buttonBg.stroke({ color: 0xFFFFFF, width: 2 });
+        });
+        
+        eyeButton.on('pointerout', () => {
+          buttonBg.clear();
+          buttonBg.circle(0, 0, height * 0.03);
+          buttonBg.fill({ color: 0x4A90E2, alpha: 0.8 });
+          buttonBg.stroke({ color: 0xFFFFFF, width: 2 });
+        });
+        
+        rowContainer.addChild(eyeButton);
+      } else {
+        // Regular text cell
+        let textColor = 0xFFFFFF;
+        if (key === 'profit') {
+          // Color-code profit
+          const profitValue = parseFloat(String(cellValue).replace(/[^\d.-]/g, ''));
+          textColor = profitValue >= 0 ? 0x2ECC71 : 0xE74C3C;
+        }
+        
+        const cellText = new Text(String(cellValue), {
+          fontFamily: 'Roboto',
+          fontSize: fontSize,
+          fill: textColor,
+          align: columns[colIndex].align
+        });
+        
+        // Position text based on alignment
+        if (columns[colIndex].align === 'center') {
+          cellText.anchor.set(0.5, 0.5);
+          cellText.x = cellX + colWidth / 2;
+        } else if (columns[colIndex].align === 'right') {
+          cellText.anchor.set(1, 0.5);
+          cellText.x = cellX + colWidth - 10;
+        } else {
+          cellText.anchor.set(0, 0.5);
+          cellText.x = cellX + 10;
+        }
+        
+        cellText.y = rowHeight / 2;
+        rowContainer.addChild(cellText);
+      }
+      
+      cellX += colWidth;
+    });
+    
+    rowsContainer.addChild(rowContainer);
+  });
