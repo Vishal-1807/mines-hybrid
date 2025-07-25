@@ -80,6 +80,69 @@ const replaceCellWithStaticBomb = async (row: number, col: number): Promise<void
   }
 };
 
+/**Replace cell button with static diamond image (for unrevealed diamonds)
+ */
+const replaceCellWithStaticDiamond = async (row: number, col: number): Promise<void> => {
+  try {
+    // Get the grid reference from window (set in main.ts)
+    const grid = (window as any).gameGrid;
+    if (!grid) {
+      console.warn('Grid reference not found, cannot replace cell');
+      return;
+    }
+
+    // Get the grid cells
+    const gridCells = grid.getGridCells();
+    if (!gridCells[row] || !gridCells[row][col]) {
+      console.warn(`Cell at row ${row}, col ${col} not found`);
+      return;
+    }
+
+    const cell = gridCells[row][col];
+    const button = cell.button;
+    const parent = button.parent;
+
+    if (!parent) {
+      console.warn('Cell button has no parent container');
+      return;
+    }
+
+    // Get button properties for sprite positioning
+    const buttonX = button.x;
+    const buttonY = button.y;
+    const buttonWidth = button.width;
+    const buttonHeight = button.height;
+
+    // Create static diamond sprite from diamond.png asset
+    const diamondTexture = Assets.get('diamond');
+    if (!diamondTexture) {
+      console.error('Diamond texture not found in assets');
+      return;
+    }
+    const diamondSprite = new Sprite(diamondTexture);
+
+    // Position and size the sprite to match the button
+    diamondSprite.x = buttonX;
+    diamondSprite.y = buttonY;
+    diamondSprite.width = buttonWidth;
+    diamondSprite.height = buttonHeight;
+    diamondSprite.anchor.set(0.5);
+
+    // Replace button with static diamond sprite
+    parent.removeChild(button);
+    parent.addChild(diamondSprite);
+
+    // Update cell references
+    cell.button = diamondSprite;
+    cell.currentSprite = diamondSprite;
+    cell.isRevealed = true;
+
+    console.log(`💎 Replaced cell (${row}, ${col}) with static diamond image`);
+  } catch (error) {
+    console.error('Error replacing cell with static diamond:', error);
+  }
+};
+
 /**
  * Replace cell button with appropriate sprite animation
  * Returns a promise that resolves when the animation completes (for bomb) or immediately (for diamond)
@@ -122,7 +185,7 @@ const replaceCellWithAnimation = async (row: number, col: number, hitMine: boole
         y: buttonY,
         width: buttonWidth,
         height: buttonHeight,
-        animationSpeed: 0.7,
+        animationSpeed: 0.5,
         loop: false,
         autoplay: true,
         anchor: 0.5,
@@ -155,8 +218,8 @@ const replaceCellWithAnimation = async (row: number, col: number, hitMine: boole
         y: buttonY,
         width: buttonWidth,
         height: buttonHeight,
-        animationSpeed: 0.25,
-        loop: true,
+        animationSpeed: 0.5,
+        loop: false,
         autoplay: true,
         anchor: 0.5,
         animationName: 'diamond'
@@ -234,7 +297,7 @@ export const revealAllRemainingCells = async (): Promise<void> => {
               await replaceCellWithStaticBomb(row, col);
             } else if (cellValue === 'DIAMOND') {
               // Use diamond animation for safe cells
-              await replaceCellWithAnimation(row, col, false);
+              await replaceCellWithStaticDiamond(row, col);
             }
             revealedCount++;
           })();

@@ -14,9 +14,9 @@ export class WebSocketService {
 
   // Get the URL with the current token from GlobalState
   private getWebSocketUrl(): string {
-    const token = GlobalState.getToken();
-    // const token = gametoken;
-    return REACT_MODE ? `wss://backend.inferixai.link/user/auth?authorization=Bearer ${token}` :  `wss://backend.inferixai.link/user/auth?authorization=Bearer ${gametoken}`;
+    const token = REACT_MODE ? GlobalState.getToken() : gametoken;
+    // return `${GlobalState.getWebSocketUrl()}/user/auth?authorization=Bearer ${token}`;
+    return REACT_MODE ? `${GlobalState.getWebSocketUrl()}/user/auth?authorization=Bearer ${token}` : `wss://backend.inferixai.link/user/auth?authorization=Bearer ${token}`;
   }
 
   private constructor() {

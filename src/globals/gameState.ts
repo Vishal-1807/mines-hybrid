@@ -23,11 +23,16 @@ const DEFAULT_ROWS = 3;
 const DEFAULT_COLS = 3;
 const DEFAULT_BALANCE = 1000000;
 const DEFAULT_STAKE = 1.00;
-const DEFAULT_TABLE_ID = "STGMN101";
+const DEFAULT_TABLE_ID = "STGMF101";
 
 //Grid Dimensions
 let gridCols = DEFAULT_COLS;
 let gridRows = DEFAULT_ROWS;
+
+//urls
+let s3_url = "";
+let api_url = "";
+let websocket_url = "";
 
 
 //Screen size
@@ -44,6 +49,30 @@ let minesClicked = 0;
 
 // Clicked cells tracking for current round
 let clickedCells: Set<string> = new Set();
+
+const setS3Url = (url: string) => {
+    s3_url = url;
+}
+
+const setApiUrl = (url: string) => {
+    api_url = url;
+}
+
+const setWebSocketUrl = (url: string) => {
+    websocket_url = url;
+}
+
+const getS3Url = () => {
+    return s3_url;
+}
+
+const getApiUrl = () => {
+    return api_url;
+}
+
+const getWebSocketUrl = () => {
+    return websocket_url;
+}
 
 const setGameState = () => {
     console.log(GlobalState.getMinesClickedCount(), "helloo");
@@ -522,6 +551,12 @@ export const GlobalState = {
     multiplier: 1,
     setMultiplier,
     getMultiplier,
+    setS3Url,
+    getS3Url,
+    setApiUrl,
+    getApiUrl,
+    setWebSocketUrl,
+    getWebSocketUrl,
 
     //screen size
     smallScreen: false,

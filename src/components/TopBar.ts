@@ -17,7 +17,7 @@ export const createTopBar = (appWidth: number, appHeight: number, app: Applicati
 
   const balanceButton = createButton({
     x: appWidth / 2,
-    y: 0.038*appHeight,
+    y: 0.034*appHeight,
     width: appWidth * 0.55,
     height: Math.max(25, appHeight * 0.04),
     color: UI_THEME.BET_VALUEBAR,
@@ -57,7 +57,7 @@ export const createTopBar = (appWidth: number, appHeight: number, app: Applicati
 
   const homeButton = createButton({
     x: appWidth * 0.1,
-    y: 0.038*appHeight,
+    y: 0.034*appHeight,
     width: Math.max(25, appHeight * 0.04),
     height: Math.max(25, appHeight * 0.04),
     color: UI_THEME.BET_VALUEBAR,
@@ -78,7 +78,7 @@ export const createTopBar = (appWidth: number, appHeight: number, app: Applicati
 
   const settingsButton = createButton({
     x: appWidth - appWidth * 0.1,
-    y: 0.038*appHeight,
+    y: 0.034*appHeight,
     width: Math.max(25, appHeight * 0.04),
     height: Math.max(25, appHeight * 0.04),
     color: UI_THEME.BET_VALUEBAR,

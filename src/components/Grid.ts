@@ -295,8 +295,8 @@ export const createGrid = (options: GridOptions) => {
     }
   };
 
-  // Helper function to load a cell with diamond animation
-  const loadCellWithDiamondAnimation = async (row: number, col: number): Promise<void> => {
+  // Helper function to load a cell with diamond static
+  const loadCellWithStaticDiamond = async (row: number, col: number): Promise<void> => {
     try {
       const cell = gridCells[row][col];
       const button = cell.button;
@@ -313,18 +313,16 @@ export const createGrid = (options: GridOptions) => {
       const buttonWidth = button.width;
       const buttonHeight = button.height;
 
-      // Create diamond sprite (loops)
-      const diamondSprite = await createSpriteFromLoadedAssets('diamondSprite', {
-        x: buttonX,
-        y: buttonY,
-        width: buttonWidth,
-        height: buttonHeight,
-        animationSpeed: 0.25,
-        loop: true,
-        autoplay: true,
-        anchor: 0.5,
-        animationName: 'diamond'
-      });
+      // Create diamond sprite
+      const diamondTexture = Assets.get('diamond');
+      const diamondSprite = new Sprite(diamondTexture);
+
+      // Position and size the sprite to match the button
+      diamondSprite.x = buttonX;
+      diamondSprite.y = buttonY;
+      diamondSprite.width = buttonWidth;
+      diamondSprite.height = buttonHeight;
+      diamondSprite.anchor.set(0.5);
 
       // Replace button with diamond sprite
       parent.removeChild(button);
@@ -382,7 +380,7 @@ export const createGrid = (options: GridOptions) => {
                 loadedCount++;
               } else if (cellValue === 'DIAMOND') {
                 // Load diamond cell with animation
-                await loadCellWithDiamondAnimation(row, col);
+                await loadCellWithStaticDiamond(row, col);
                 loadedCount++;
               }
 

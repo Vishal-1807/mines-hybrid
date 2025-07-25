@@ -13,5 +13,8 @@ declare global {
     SendMessageToJS: (message: string) => void;
     ReactNativeWebView?: any;
     isInWebView?: boolean;
+    s3url?: string;
+    apiUrl?: string;
+    websocketUrl?: string;
   }
 }

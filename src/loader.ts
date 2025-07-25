@@ -1,14 +1,17 @@
 import { Assets } from 'pixi.js';
+import { GlobalState } from './globals/gameState';
+import { REACT_MODE } from "./components/constants/ReactMode";
 
 export async function loadAssets() {
-    const ASSET_BASE = '';
-    // const ASSET_BASE = 'https://s3.eu-west-2.amazonaws.com/static.inferixai.link/pixi-game-assets/mines/'
+    // const ASSET_BASE = '';
+    const ASSET_BASE = REACT_MODE ? `${GlobalState.getS3Url()}mines-field/` : 'https://s3.eu-west-2.amazonaws.com/static.inferixai.link/pixi-game-assets/mines-field/'
     
     // Load all assets including the font file
     await Assets.load([
         { alias: 'gridCell', src: `${ASSET_BASE}assets/GridCell.png` },
         { alias: 'diamondSprite', src: `${ASSET_BASE}sprites/diamond.json` },
         { alias: 'bomb', src: `${ASSET_BASE}assets/boom.png` },
+        { alias: 'diamond', src: `${ASSET_BASE}assets/diamondStatic.png` },
         { alias: 'bombSprite', src: `${ASSET_BASE}sprites/bomb.json` },
         { alias: 'balanceTab', src: `${ASSET_BASE}assets/BalanceTab.png` },
         { alias: 'valueBar', src: `${ASSET_BASE}assets/ValueBar.png` },
@@ -24,7 +27,8 @@ export async function loadAssets() {
         { alias: 'closeButton', src: `${ASSET_BASE}assets/CloseButton.png` },
         { alias: 'Sound', src: `${ASSET_BASE}assets/Sound.png` },
         { alias : 'Rules', src: `${ASSET_BASE}assets/Rules.png` },
-        { alias: 'History', src: `${ASSET_BASE}assets/History.png` }
+        { alias: 'History', src: `${ASSET_BASE}assets/History.png` },
+        { alias: 'bg', src: `${ASSET_BASE}assets/bg.png` }
     ]);
 
     console.log('All assets loaded successfully');

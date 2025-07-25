@@ -1,4 +1,4 @@
-import { Application, Assets, Text } from 'pixi.js'
+import { Application, Assets, Text, Sprite } from 'pixi.js'
 import { hideSplash, loadAssets } from './loader';
 import { GlobalState } from './globals/gameState';
 import { WebSocketService } from './WebSockets/WebSocketService';
@@ -31,6 +31,20 @@ const USE_REACT_MODE = REACT_MODE; // Set to false for local mode
 const initializeGame = async (app: Application, container?: HTMLDivElement) => {
   // Enable sorting for z-index to work properly
   app.stage.sortableChildren = true;
+
+  //set urls, fetch from window (only if not already set in React mode)
+  if (!GlobalState.getS3Url()) {
+    const fetchUrls = async () => {
+      GlobalState.setS3Url((window as any).s3url);
+      GlobalState.setApiUrl((window as any).apiUrl);
+      GlobalState.setWebSocketUrl((window as any).websocketUrl);
+    }
+
+    await fetchUrls();
+    console.log(GlobalState.getS3Url(), GlobalState.getApiUrl(), GlobalState.getWebSocketUrl(), "urls fetched");
+  } else {
+    console.log('🌐 URLs already set from React mode initialization');
+  }
 
   // Initialize UI Visibility Manager for showing/hiding UI elements
   const uiVisibilityManager = getUIVisibilityManager({
@@ -108,6 +122,34 @@ const initializeGame = async (app: Application, container?: HTMLDivElement) => {
       maxWidth: app.screen.width < 500 ? app.screen.width : 500,
       backgroundColor: '#1A2C38'
     });
+
+    // Add background image to the game container (behind all other containers)
+    const bgTexture = Assets.get('bg');
+    if (bgTexture) {
+      const bgSprite = new Sprite(bgTexture);
+      const bounds = gameContainer.getGameAreaBounds();
+      bgSprite.width = bounds.width;
+      bgSprite.height = app.screen.height + 70; //because the image is not proper, 
+      // we are increasing its height and setting its y to start at -70.
+      // So the grid is centered
+
+      // Position the background at the top-left of the game area
+      bgSprite.x = 0;
+      bgSprite.y = -70;
+
+      // Set z-index to be behind all other containers
+      bgSprite.zIndex = -1;
+
+      // Add to game area
+      gameContainer.gameArea.addChild(bgSprite);
+
+      // Store reference for resize handling
+      (gameContainer as any).backgroundSprite = bgSprite;
+
+      // console.log('🖼️ Background image added to game container with dimensions:', targetWidth, 'x', targetHeight);
+    } else {
+      console.warn('⚠️ Background texture not found');
+    }
   
     // Get the game area bounds
     const bounds = gameContainer.getGameAreaBounds();
@@ -124,25 +166,31 @@ const initializeGame = async (app: Application, container?: HTMLDivElement) => {
     );
 
     // Example 2: Create a game board area at 20% from top with 50% height (percentage height!)
+    // Make background transparent so the bg.png shows through
     const gameBoardContainer = createStyledPositionedContainer(
       bounds.width,
       bounds.height,
       '50%',  // height as percentage of container height
       8,     // 8% from top
-      '#0F1B26', // background
+      0x000000, // transparent background (will be set to alpha 0)
       '#304553', // border color
       3,      // border width
       8,       // border radius
-      Assets.get('controlsBar')
+      // Assets.get('controlsBar')
     );
+
+    // Make the game board background transparent so bg.png shows through
+    if (gameBoardContainer.container.children[0]) {
+      (gameBoardContainer.container.children[0] as any).alpha = 0;
+    }
 
     // Example 3: Create a footer/controls area at 80% from top with 15% height (percentage height!) - now scrollable
     console.log('🎨 Controls bar texture:', Assets.get('controlsBar')); // Debug log
     const controlsContainer = createScrollablePositionedContainer(
       bounds.width,
       GlobalState.smallScreen ? bounds.height + app.screen.height*0.04 : bounds.height,
-      '41%',  // height as percentage of container height
-      59,     // 60% from top
+      '42%',  // height as percentage of container height
+      58,     // 58% from top
       800,    // scroll height - content can be up to 800px tall
       UI_THEME.CONTROL_BACKGROUND, // background
       '#304553', // border color
@@ -364,20 +412,44 @@ const initializeGame = async (app: Application, container?: HTMLDivElement) => {
   const resize = () => {
     const newWidth = app.screen.width;
     const newHeight = app.screen.height;
-  
+
     // Update game container dimensions
     if (gameContainer && typeof gameContainer.updateDimensions === 'function') {
       gameContainer.updateDimensions(newWidth, newHeight);
-      
+
       // Get updated bounds
       const bounds = gameContainer.getGameAreaBounds();
-      
+
+      // Update background sprite scaling and positioning
+      if ((gameContainer as any).backgroundSprite) {
+        const bgSprite = (gameContainer as any).backgroundSprite;
+        const bgTexture = bgSprite.texture;
+
+        // Set background width to gameContainer width and height to screen height
+        const targetWidth = bounds.width;
+        const targetHeight = newHeight; // Use screen height
+
+        const scaleX = targetWidth / bgTexture.width;
+        const scaleY = targetHeight / bgTexture.height;
+
+        // bgSprite.scale.set(scaleX, scaleY);
+
+        // Position at top-left
+        bgSprite.x = 0;
+        bgSprite.y = 0;
+      }
+
       // Update positioned containers
       if ((gameContainer as any).headerContainer) {
         (gameContainer as any).headerContainer.updateDimensions(bounds.width, bounds.height);
       }
       if ((gameContainer as any).gameBoardContainer) {
         (gameContainer as any).gameBoardContainer.updateDimensions(bounds.width, bounds.height);
+
+        // Re-apply transparency to game board background after resize
+        if ((gameContainer as any).gameBoardContainer.container.children[0]) {
+          ((gameContainer as any).gameBoardContainer.container.children[0] as any).alpha = 0;
+        }
       }
       if ((gameContainer as any).controlsContainer) {
         (gameContainer as any).controlsContainer.updateDimensions(bounds.width, bounds.height);
@@ -419,7 +491,7 @@ const initializeGame = async (app: Application, container?: HTMLDivElement) => {
 // React mode initialization (for embedded use)
 const initReactMode = async (container: HTMLDivElement) => {
   console.log('🔧 Starting in REACT MODE');
-  
+
   // Get authentication token from session storage
   const token = sessionStorage.getItem('token') || "";
   if (token) {
@@ -428,6 +500,16 @@ const initReactMode = async (container: HTMLDivElement) => {
   } else {
     console.warn("No token found in session storage");
   }
+
+  // Fetch URLs first to get S3 URL for splash screen
+  const fetchUrls = async () => {
+    GlobalState.setS3Url((window as any).s3url);
+    GlobalState.setApiUrl((window as any).apiUrl);
+    GlobalState.setWebSocketUrl((window as any).websocketUrl);
+  }
+
+  await fetchUrls();
+  console.log('🌐 URLs fetched for React mode:', GlobalState.getS3Url());
 
   // Create splash screen overlay with gameContainer dimensions
   const splash = document.createElement('div');
@@ -463,8 +545,8 @@ const initReactMode = async (container: HTMLDivElement) => {
   video.style.objectFit = 'cover';
 
   const source = document.createElement('source');
-  // TODO: Replace with your game's splash video
-  source.src = 'https://s3.eu-west-2.amazonaws.com/static.inferixai.link/pixi-game-assets/mines/assets/minesSplash.mp4';
+  // Use S3 URL fetched from window
+  source.src = GlobalState.getS3Url() + 'mines-field/assets/minesSplash.mp4';
   source.type = 'video/mp4';
 
   video.appendChild(source);

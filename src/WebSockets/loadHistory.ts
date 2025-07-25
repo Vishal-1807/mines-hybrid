@@ -11,7 +11,23 @@ export const loadHistoryPage = async (page: number = 1, pageSize: number = 10) =
   console.log(`📊 Loading history page ${page} with pageSize ${pageSize}`);
   
   try {
-    const response = await fetch('https://backend.inferixai.link/api/get-minesweeper-history', {
+    // const response = await fetch(`${GlobalState.getApiUrl()}/api/get-minesweeper-history`, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     // 'authorization': `Bearer ${gametoken}`,
+    //     'authorization': REACT_MODE ? `Bearer ${GlobalState.getToken()}` : `Bearer ${gametoken}`
+    //   },
+    //   body: JSON.stringify({
+    //     page: page,
+    //     pageSize: pageSize,
+    //     tableId: GlobalState.getTableId(),
+    //   })
+    // });
+
+    const url = REACT_MODE ? `${GlobalState.getApiUrl()}/api/get-minesweeper-history` : 'https://backend.inferixai.link/api/get-minesweeper-history';
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
