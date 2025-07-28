@@ -16,5 +16,7 @@ declare global {
     s3url?: string;
     apiUrl?: string;
     websocketUrl?: string;
+    logoutUser: () => void;
+    loadingCompleted: () => void;
   }
 }
