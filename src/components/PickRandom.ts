@@ -10,6 +10,15 @@ import { SoundManager } from '../utils/SoundManager';
 /**
  * Pick a random unclicked cell and trigger its click event
  */
+
+function getSecureRandomIndex(arrayLength) {
+  if (arrayLength <= 0) throw new Error('Array length must be positive');
+  const array = new Uint32Array(1);
+  window.crypto.getRandomValues(array);
+  // Get a uniformly distributed index in 0 ... arrayLength - 1
+  return array[0] % arrayLength;
+}
+
 const pickRandomCell = async (): Promise<void> => {
   try {
     // Check if game is started
@@ -27,7 +36,7 @@ const pickRandomCell = async (): Promise<void> => {
     }
 
     // Pick a random cell from unclicked cells
-    const randomIndex = Math.floor(Math.random() * unclickedCells.length);
+    const randomIndex = getSecureRandomIndex(unclickedCells.length);
     const selectedCell = unclickedCells[randomIndex];
 
     console.log(`🎲 Picking random cell: row ${selectedCell.row}, col ${selectedCell.col} (${randomIndex + 1}/${unclickedCells.length} available)`);
