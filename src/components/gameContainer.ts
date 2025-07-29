@@ -48,17 +48,19 @@ export const createGameContainer = (config: GameContainerConfig): GameContainerR
    */
   const updateDimensions = (screenWidth: number, screenHeight: number) => {
     // Calculate container width within constraints
-    let containerWidth = Math.min(Math.max(screenWidth * 0.95, minWidth), maxWidth);
+    let containerWidth: number;
 
-    // Ensure we don't exceed screen width with minimal margin
-    const minMargin = 0; // Minimum margin on each side for mobile
-    if (containerWidth > screenWidth - minMargin) {
-      containerWidth = screenWidth - minMargin;
+    // For small screens (mobile), use full width to eliminate margins
+    if (screenWidth <= 500) {
+      containerWidth = screenWidth;
+    } else {
+      // For larger screens, use 95% width with max constraint
+      containerWidth = Math.min(screenWidth * 0.95, maxWidth);
     }
 
-    // For very narrow screens, use full width with minimal margins
-    if (screenWidth < 360) {
-      containerWidth = screenWidth; // 2px margin on each side for very narrow screens
+    // Ensure minimum width is respected
+    if (containerWidth < minWidth) {
+      containerWidth = Math.min(minWidth, screenWidth);
     }
 
     // Container height can be full screen height or adjusted as needed
@@ -145,10 +147,19 @@ export const createStyledGameContainer = (config: GameContainerConfig & {
   app.stage.addChild(mainContainer);
 
   const updateDimensions = (screenWidth: number, screenHeight: number) => {
-    let containerWidth = Math.min(Math.max(screenWidth * 0.95, minWidth), maxWidth);
-    
-    if (containerWidth > screenWidth - 4) {
-      containerWidth = screenWidth - 4;
+    let containerWidth: number;
+
+    // For small screens (mobile), use full width to eliminate margins
+    if (screenWidth <= 500) {
+      containerWidth = screenWidth;
+    } else {
+      // For larger screens, use 95% width with max constraint
+      containerWidth = Math.min(screenWidth * 0.95, maxWidth);
+    }
+
+    // Ensure minimum width is respected
+    if (containerWidth < minWidth) {
+      containerWidth = Math.min(minWidth, screenWidth);
     }
 
     const containerHeight = screenHeight - 8; // 4px margin top/bottom

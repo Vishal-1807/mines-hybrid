@@ -129,13 +129,13 @@ const initializeGame = async (app: Application, container?: HTMLDivElement) => {
       const bgSprite = new Sprite(bgTexture);
       const bounds = gameContainer.getGameAreaBounds();
       bgSprite.width = bounds.width;
-      bgSprite.height = app.screen.height + 70; //because the image is not proper, 
+      bgSprite.height = app.screen.height + app.screen.height*0.06; //because the image is not proper, 
       // we are increasing its height and setting its y to start at -70.
       // So the grid is centered
 
       // Position the background at the top-left of the game area
       bgSprite.x = 0;
-      bgSprite.y = -70;
+      bgSprite.y = -app.screen.height*0.06;
 
       // Set z-index to be behind all other containers
       bgSprite.zIndex = -1;
