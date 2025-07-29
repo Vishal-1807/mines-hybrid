@@ -2,7 +2,6 @@ import { GlobalState } from "../globals/gameState";
 import { WebSocketService } from "./WebSocketService";
 import { revealAllRemainingCells } from "./CellClickEvent";
 import { hideGameButtons, showBetButton } from "../utils/gameButtonVisibilityManager";
-import loadGridFromMatrix from "../components/Grid";
 
 export const sendCashoutEvent = async (bombEnd: boolean = false) => {
   if(!GlobalState.getGameStarted?.()){

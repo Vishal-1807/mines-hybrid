@@ -740,66 +740,6 @@ export const createAccountSettingsSection = (): SettingsContentSection => {
         container.addChild(retryText);
       };
 
-      // Generate dummy data with enhanced matrix for testing
-      const generateDummyHistoryData = (): HistoryResponse => {
-        const dummyHistory: HistoryItem[] = [];
-        for (let i = 0; i < 8; i++) {
-          const betAmount = Math.floor(Math.random() * 100) + 10;
-          const won = Math.random() > 0.5 ? betAmount * (1 + Math.random() * 2) : 0;
-          const profit = won - betAmount;
-
-          // Create more realistic matrix data
-          const matrixTypes = [
-            [
-              ['SAFE', 'MINE', 'SAFE', 'SAFE'],
-              ['SAFE', 'SAFE', 'MINE', 'SAFE'],
-              ['MINE', 'SAFE', 'SAFE', 'SAFE'],
-              ['SAFE', 'SAFE', 'SAFE', 'MINE']
-            ],
-            [
-              ['SAFE', 'SAFE', 'MINE'],
-              ['MINE', 'SAFE', 'SAFE'],
-              ['SAFE', 'MINE', 'SAFE']
-            ],
-            [
-              ['SAFE', 'MINE', 'SAFE', 'SAFE', 'MINE'],
-              ['SAFE', 'SAFE', 'SAFE', 'MINE', 'SAFE'],
-              ['MINE', 'SAFE', 'SAFE', 'SAFE', 'SAFE']
-            ]
-          ];
-
-          const randomMatrix = matrixTypes[Math.floor(Math.random() * matrixTypes.length)];
-
-          dummyHistory.push({
-            id: `dummy_${i}`,
-            roundId: `round_${Date.now()}_${i}`,
-            betAmount,
-            profit,
-            won,
-            endTime: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-            gameMatrix: randomMatrix,
-            revealedMatrix: randomMatrix, // For compatibility with settings.ts
-            revealedCells: [
-              { row: 0, col: 0 },
-              { row: 1, col: 1 }
-            ],
-            gridSize: randomMatrix.length,
-            currency: 'USD'
-          });
-        }
-
-        return {
-          status: 'RS_OK',
-          errorDescription: '',
-          history: dummyHistory,
-          totalRecords: dummyHistory.length,
-          page: 1,
-          pageSize: 10,
-          totalPages: 1,
-          hasNextPage: false
-        };
-      };
-
       // Enhanced page change handler with better error handling
       const handlePageChange = async (newPage: number) => {
         recordUserActivity(ActivityTypes.SETTINGS_OPEN, { action: 'page_change', page: newPage });
@@ -891,7 +831,6 @@ export const createAccountSettingsSection = (): SettingsContentSection => {
             console.error('📊 Failed to load fresh history:', error);
             // Fallback to dummy data if API fails
             console.log('📊 Falling back to dummy data due to API error');
-            currentHistoryData = generateDummyHistoryData();
             renderHistoryTable(currentHistoryData);
           });
       } else {

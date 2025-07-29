@@ -1,5 +1,4 @@
-import { GlobalState } from '../../globals/gameState';
-
+// UI_POS.ts - Consistent positioning constants
 export const UI_POS = {
 
   //y positioning of elements

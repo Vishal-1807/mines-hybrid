@@ -1,9 +1,5 @@
-import { Container, Graphics, Text, Assets } from 'pixi.js';
-import { createButton } from '../commons/Button';
-import { UI_THEME } from '../constants/UIThemeColors';
+import { Container, Graphics } from 'pixi.js';
 import { SoundManager } from '../../utils/SoundManager';
-import { ActivityTypes, recordUserActivity } from '../../utils/gameActivityManager';
-import { createStyledPositionedContainer } from '../commons/PositionedContainer';
 import { createText } from '../commons/Text';
 import { GlobalState } from '../../globals/gameState';
 

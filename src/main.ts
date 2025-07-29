@@ -1,10 +1,10 @@
-import { Application, Assets, Text, Sprite } from 'pixi.js'
+import { Application, Assets, Sprite } from 'pixi.js'
 import { hideSplash, loadAssets, setupSplashVideoLoadDetection } from './loader';
 import { GlobalState } from './globals/gameState';
 import { WebSocketService } from './WebSockets/WebSocketService';
-import { getUIVisibilityManager, registerUIElement } from './utils/uiVisibilityManager';
+import { getUIVisibilityManager } from './utils/uiVisibilityManager';
 import { initializeGameButtonManager } from './utils/gameButtonVisibilityManager';
-import { initializeActivityManager, pauseActivityTimer, resumeActivityTimer } from './utils/gameActivityManager';
+import { initializeActivityManager, resumeActivityTimer } from './utils/gameActivityManager';
 import { initializeButtonStateManager, setupGameStateListeners } from './utils/gameButtonStateManager';
 import { SoundManager } from './utils/SoundManager';
 import { initializeSettingsPopupManager, getSettingsPopupManager } from './components/popups/SettingsPopupManager';
@@ -12,12 +12,9 @@ import { createGameContainer } from './components/gameContainer';
 import {UI_THEME} from './components/constants/UIThemeColors';
 import { createBetButton, createGridSizesTab, createBetTab, createMinesTab, 
           createGrid, createTopBar, createCashoutButton, createPickRandomButton } from './components';
-import { createText } from './components/commons';
 import {
-  createPositionedContainer,
   createSimplePositionedContainer,
   createStyledPositionedContainer,
-  createMarginedPositionedContainer,
   createScrollablePositionedContainer
 } from './components/commons/PositionedContainer';
 import { createWinModal } from './components/popups/WinModal';
