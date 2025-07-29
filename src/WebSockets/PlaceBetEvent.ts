@@ -35,7 +35,7 @@ export const sendPlaceBetEvent = async () => {
         console.error('❌ Failed to place bet:', res);
         // Ensure game state is reset on failure
         GlobalState.setGameStarted(false);
-        reject(res);
+        reject(new Error(res));
       }
     };
       ws.once('mines_placebet', handleResponse);
@@ -77,11 +77,11 @@ export const sendRoundStartEvent = async () => {
           resolve(res);
         } catch (betError) {
           console.error('❌ Bet placement failed after round start:', betError);
-          reject(betError);
+          reject(new Error(betError));
         }
       } else {
         console.error('❌ Failed to start round:', res);
-        reject(res);
+        reject(new Error(res));
       }
     };
     ws.once('mines_round_start', handleResponse);

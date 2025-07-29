@@ -858,7 +858,7 @@ const createEnhancedHistoryTableWithPagination = (options: {
   height: number;
   historyResponse: HistoryResponse;
   onViewMatrix: (historyItem: HistoryItem) => void;
-  onPageChange: (page: number) => void;
+  onPageChange: (page: number) => Promise<void>;
   columns: { width: number; align: string }[];
   rowHeight: number;
   headerHeight: number;

@@ -62,7 +62,7 @@ const calculateDimensions = (screenWidth: number, screenHeight: number): Setting
   
   // Navigation area
   const navigationHeight = isWideScreen ? popupHeight : 60;
-  const navigationY = isWideScreen ? popupY + 20 : popupY + 20;
+  const navigationY = popupY + 20;
   
   // Content area
   const contentX = isWideScreen ? popupX + 200 : popupX; // Leave space for sidebar on wide screens

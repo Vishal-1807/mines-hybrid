@@ -441,7 +441,7 @@ export const sendCellClickEvent = async (row: number, col: number) => {
         }
 
         console.log('🔓 UI unlocked after cell click error');
-        reject(res);
+        reject(new Error(res));
       }
     };
 
